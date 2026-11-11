@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhino Live Bridge</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    width: 400px;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 13px;
+    direction: ltr;
+  }
+  body.rtl { direction: rtl; }
+  body.ltr { direction: ltr; }
+
+  /* ---------------- HEADER ---------------- */
+  .app-header {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+            justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .app-title { font-size: 14px; font-weight: bold; color: var(--accent); }
+  .app-ver   { font-size: 10px; color: var(--muted); }
+
+  /* ---------------- TABS ---------------- */
+  .tabs {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    -webkit-box-flex: 1;
+        -ms-flex: 1;
+            flex: 1;
+    padding: 9px 2px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted2);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--hover); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--bg);
+  }
+
+  /* ---------------- CARDS / LAYOUT ---------------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-strong);
+    margin-bottom: 8px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+            justify-content: space-between;
+  }
+  .tab-panel { display: none; padding: 12px; }
+  .tab-panel.active { display: block; }
+
+  .row-flex {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-box-pack: justify;
+        -ms-flex-pack: justify;
+            justify-content: space-between;
+    gap: 10px;
+  }
+  .toggle-label { font-size: 13px; font-weight: 600; color: var(--text-strong); margin-bottom: 2px; }
+
+  /* ---------------- TOGGLE SWITCH ---------------- */
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    min-width: 40px;
+    border-radius: 11px;
+    background: #333;
+    cursor: pointer;
+    -webkit-transition: background 0.2s;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    -webkit-transition: left 0.2s;
+    transition: left 0.2s;
+  }
+  .toggle.on        { background: var(--ok); }
+  .toggle.on-purple { background: var(--info); }
+  .toggle.on::after, .toggle.on-purple::after { left: 20px; }
+
+  /* ---------------- DESCRIPTION BOXES ---------------- */
+  .desc {
+    font-size: 11px;
+    padding: 8px;
+    border-radius: 4px;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .desc.blue   { background: rgba(0,212,255,0.08);  border-left: 3px solid var(--accent); }
+  .desc.red    { background: rgba(255,68,68,0.08);  border-left: 3px solid var(--err); }
+  .desc.purple { background: rgba(187,134,252,0.1); border-left: 3px solid var(--info); }
+  .desc.green  { background: rgba(0,255,136,0.08);  border-left: 3px solid var(--ok); }
+
+  /* ---------------- STATUS ---------------- */
+  .status-row {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    font-size: 12px;
+  }
+  .status-label { color: var(--muted2); min-width: 62px; }
+  .dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 50%;
+    background: var(--err);
+    display: inline-block;
+  }
+  .dot.ok   { background: var(--ok); -webkit-box-shadow: 0 0 6px var(--ok); box-shadow: 0 0 6px var(--ok); }
+  .dot.bad  { background: var(--err); }
+  .dot.warn { background: var(--warn); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 11px;
+    font-weight: bold;
+  }
+
+  /* ---------------- PROGRESS ---------------- */
+  .progress-track {
+    height: 6px;
+    background: var(--track);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 6px 0 6px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: -webkit-linear-gradient(left, var(--accent), var(--ok));
+    background: linear-gradient(left, var(--accent), var(--ok));
+    -webkit-transition: width 0.25s;
+    transition: width 0.25s;
+  }
+  .activity-text { font-size: 11px; color: var(--muted2); line-height: 1.6; }
+  .activity-text.ok   { color: var(--ok); }
+  .activity-text.bad  { color: var(--err); }
+  .activity-text.busy { color: var(--accent); }
+
+  /* ---------------- LOG ---------------- */
+  .logbox {
+    background: var(--code-bg);
+    color: var(--ok);
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    max-height: 80px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  /* ---------------- BUTTONS / INPUTS ---------------- */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--on-accent);
+    outline: none;
+  }
+  .btn:disabled { opacity: 0.55; cursor: default; }
+  .btn-green  { background: -webkit-linear-gradient(var(--ok), #00c46a); background: linear-gradient(var(--ok), #00c46a); }
+  .btn-green:hover  { background: -webkit-linear-gradient(#00e07a, #00a85c); background: linear-gradient(#00e07a, #00a85c); }
+  .btn-cyan   { background: -webkit-linear-gradient(var(--accent), #0091c2); background: linear-gradient(var(--accent), #0091c2); }
+  .btn-cyan:hover   { background: -webkit-linear-gradient(#00bce6, #007ba8); background: linear-gradient(#00bce6, #007ba8); }
+  .btn-purple { background: -webkit-linear-gradient(var(--info), #8a5cf6); background: linear-gradient(var(--info), #8a5cf6); color: var(--bg); }
+  .btn-purple:hover { background: -webkit-linear-gradient(#a974ef, #7a4ce0); background: linear-gradient(#a974ef, #7a4ce0); }
+  .btn-gray   { background: var(--btn-gray); color: var(--text); }
+  .btn-gray:hover   { background: var(--btn-gray-hover); }
+  .btn-red    { background: var(--err); color: #ffffff; }
+  .btn-red:hover    { background: #d93a3a; }
+  .btn-sm { display: inline-block; width: auto; padding: 6px 12px; font-size: 11px; }
+  .btn-xs { display: inline-block; width: auto; padding: 2px 8px; font-size: 10px; border-radius: 4px; }
+
+  textarea, input[type="text"], select {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 8px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    outline: none;
+    resize: vertical;
+  }
+  textarea:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
+  select { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; }
+
+  .manual-meta { font-size: 11px; color: var(--muted); margin: 6px 0 2px 0; }
+  .manual-meta.clean { color: var(--ok); }
+  .section-title { font-size: 13px; font-weight: bold; margin: 0 0 8px 0; }
+  .section-title.green  { color: var(--ok); }
+  .section-title.cyan   { color: var(--accent); }
+  .section-title.purple { color: var(--info); }
+
+  .field-label { font-size: 11px; color: var(--muted2); margin: 8px 0 4px 0; display: block; }
+  .btn-row { display: -webkit-box; display: -ms-flexbox; display: flex; gap: 8px; margin-top: 8px; }
+  .btn-row .btn { width: auto; -webkit-box-flex: 1; -ms-flex: 1; flex: 1; }
+
+  .hint { font-size: 10px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
+
+  /* ---------------- ABOUT ---------------- */
+  .about-box { text-align: center; padding: 10px 0; }
+  .about-emoji { font-size: 36px; line-height: 1.2; }
+  .about-name  { font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 4px; }
+  .about-ver   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .about-by    { font-size: 12px; font-weight: bold; color: var(--ok); margin-top: 6px; }
+  .about-mail  { font-size: 12px; color: var(--muted2); margin-top: 8px; }
+  .about-mail a { color: var(--accent); text-decoration: none; }
+  .about-mail a:hover { text-decoration: underline; }
+  .about-desc  { font-size: 11px; color: var(--muted2); line-height: 1.7; margin-top: 10px; text-align: inherit; }
+  .about-foot  { font-size: 10px; color: var(--dim); margin-top: 12px; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--btn-gray-hover); }
+
+  /* ================================================================
+     THEMES (2.6.2)
+     Every colour of the popup comes from these variables, so a theme
+     is just one small block. The floating panel on the page uses the
+     same palette (content.js THEMES) and follows the same setting.
+     ================================================================ */
+  body[data-theme="dark"] {
+    --bg: #0d1117; --bg2: #11161f; --surface: #1c2333; --hover: #161c28;
+    --border: #2a3346; --track: #21262d;
+    --text: #c9d1d9; --text-strong: #e6edf3; --muted: #6e7681; --muted2: #8b949e;
+    --dim: #484f58; --code-bg: #000000;
+    --accent: #00d4ff; --ok: #00ff88; --info: #bb86fc; --warn: #ffd93d; --err: #ff4444;
+    --btn-gray: #30363d; --btn-gray-hover: #3d444d; --on-accent: #0d1117;
+  }
+  body[data-theme="light"] {
+    --bg: #ffffff; --bg2: #eef2f7; --surface: #f7f9fc; --hover: #e6edf5;
+    --border: #c9d4e0; --track: #dde5ee;
+    --text: #1b2330; --text-strong: #0c1420; --muted: #5b6775; --muted2: #3f4a58;
+    --dim: #8494a5; --code-bg: #f4f7fb;
+    --accent: #0a7ea4; --ok: #0b8f4d; --info: #6a3fb8; --warn: #b26a00; --err: #c62828;
+    --btn-gray: #e3e9f1; --btn-gray-hover: #d3dce7; --on-accent: #ffffff;
+  }
+  body[data-theme="midnight"] {
+    --bg: #0b1020; --bg2: #0e152a; --surface: #141c33; --hover: #182242;
+    --border: #243252; --track: #16203a;
+    --text: #cdd8ef; --text-strong: #eaf0ff; --muted: #7b88a8; --muted2: #9aa8c8;
+    --dim: #55648a; --code-bg: #070b16;
+    --accent: #4da3ff; --ok: #39e6a0; --info: #b48bff; --warn: #ffb347; --err: #ff5f6d;
+    --btn-gray: #1d2745; --btn-gray-hover: #27345c; --on-accent: #070b16;
+  }
+  body[data-theme="nord"] {
+    --bg: #2e3440; --bg2: #333a47; --surface: #3b4252; --hover: #434c5e;
+    --border: #4c566a; --track: #3a4150;
+    --text: #e5e9f0; --text-strong: #eceff4; --muted: #9aa5b8; --muted2: #b6c0d0;
+    --dim: #7c8798; --code-bg: #272c36;
+    --accent: #88c0d0; --ok: #a3be8c; --info: #b48ead; --warn: #ebcb8b; --err: #bf616a;
+    --btn-gray: #434c5e; --btn-gray-hover: #4c566a; --on-accent: #2e3440;
+  }
+  body[data-theme="dracula"] {
+    --bg: #282a36; --bg2: #232530; --surface: #343746; --hover: #3b3e4f;
+    --border: #44475a; --track: #303341;
+    --text: #f8f8f2; --text-strong: #ffffff; --muted: #9aa0b5; --muted2: #c3c8da;
+    --dim: #6d7386; --code-bg: #21222c;
+    --accent: #8be9fd; --ok: #50fa7b; --info: #bd93f9; --warn: #f1fa8c; --err: #ff5555;
+    --btn-gray: #44475a; --btn-gray-hover: #525568; --on-accent: #21222c;
+  }
+  body[data-theme="solarized"] {
+    --bg: #fdf6e3; --bg2: #f5efdd; --surface: #fbf5e4; --hover: #f0e9d4;
+    --border: #d8cfae; --track: #ece4cd;
+    --text: #073642; --text-strong: #002b36; --muted: #6b7b82; --muted2: #586e75;
+    --dim: #93a1a1; --code-bg: #f7f1e0;
+    --accent: #268bd2; --ok: #859900; --info: #6c71c4; --warn: #b58900; --err: #dc322f;
+    --btn-gray: #e7dfc6; --btn-gray-hover: #ddd3b5; --on-accent: #fdf6e3;
+  }
+
+  /* ---------------- THEME PICKER ---------------- */
+  .theme-grid {
+    display: -ms-grid;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .theme-chip {
+    cursor: pointer;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    background: var(--bg2);
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted2);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-weight: 600;
+    outline: none;
+  }
+  .theme-chip:hover { border-color: var(--accent); }
+  .theme-chip.active { border-color: var(--accent); color: var(--text-strong); }
+  .theme-swatches { display: -webkit-box; display: -ms-flexbox; display: flex; height: 14px; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+  .theme-swatches span { -webkit-box-flex: 1; -ms-flex: 1; flex: 1; }
+</style>
+</head>
+<body class="ltr">
+
+  <!-- ============================ HEADER ============================ -->
+  <div class="app-header">
+    <div class="app-title">🦏 Rhino Live Bridge</div>
+    <div class="app-ver">v2.6.4</div>
+  </div>
+
+  <!-- ============================= TABS ============================= -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-main"     data-i18n="tabMain">🏠 Main</button>
+    <button class="tab-btn"        data-tab="tab-code"     data-i18n="tabCode">💻 Code</button>
+    <button class="tab-btn"        data-tab="tab-settings" data-i18n="tabSettings">⚙️ Settings</button>
+    <button class="tab-btn"        data-tab="tab-about"    data-i18n="tabAbout">ℹ️ About</button>
+  </div>
+
+  <!-- ========================= TAB 1 : MAIN ========================= -->
+  <div class="tab-panel active" id="tab-main">
+
+    <!-- ACTIVITY / PROGRESS FIRST: this is what the user watches -->
+    <div class="card">
+      <div class="card-title"><span data-i18n="progressTitle">📈 Activity</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="activity-text" id="activityText">Idle</div>
+      <div class="btn-row">
+        <button class="btn btn-red btn-sm" id="btnStop" data-i18n="btnStop">⏹ Stop</button>
+        <button class="btn btn-gray btn-sm" id="btnRunNewest" data-i18n="btnRunNewest">▶ Run newest on page</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gray btn-sm" id="btnFitView" data-i18n="btnFitView">🔍 Fit Rhino view</button>
+        <button class="btn btn-gray btn-sm" id="btnDockPanel" data-i18n="btnDockPanel">⇤ Dock panel</button>
+      </div>
+      <div class="status-row">
+        <span class="status-label" data-i18n="lblVerify">Verify:</span>
+        <span class="status-text" id="txtVerify">—</span>
+      </div>
+    </div>
+
+    <!-- TOGGLE 1 : MAIN SERVICE -->
+    <div class="card">
+      <div class="row-flex">
+        <div>
+          <div class="toggle-label" data-i18n="t1name">⚡ Main Service</div>
+        </div>
+        <div class="toggle on" id="tService"></div>
+      </div>
+      <div class="desc red" data-i18n="t1desc">🔴 MASTER OFF SWITCH: Turning this OFF completely disables the extension.</div>
+    </div>
+
+    <!-- TOGGLE 2 : LIVE SYNC -->
+    <div class="card">
+      <div class="row-flex">
+        <div>
+          <div class="toggle-label" data-i18n="t2name">🔴 Live Sync Mode</div>
+        </div>
+        <div class="toggle on" id="tLive"></div>
+      </div>
+      <div class="desc blue" data-i18n="t2desc">Auto-detect and execute AI-generated Rhino Python code in real-time.</div>
+    </div>
+
+    <!-- TOGGLE 3 : SMART PROMPT -->
+    <div class="card">
+      <div class="row-flex">
+        <div>
+          <div class="toggle-label" data-i18n="t3name">🧠 Smart Prompt</div>
+        </div>
+        <div class="toggle on-purple" id="tSmart"></div>
+      </div>
+      <div class="desc purple" data-i18n="t3desc">When ON, a 🧠 button appears on the Rhino Live floating panel. Type your request in the chatbox, click the 🧠 button on the panel, and your message gets enhanced with an engineered prompt that forces AI to generate ONLY clean, error-free Rhino Python code.</div>
+    </div>
+
+    <!-- TOGGLE 4 : FLOATING PANEL -->
+    <div class="card">
+      <div class="row-flex">
+        <div>
+          <div class="toggle-label" data-i18n="t4name">👁️ Show Floating Panel</div>
+        </div>
+        <div class="toggle on" id="tPanel"></div>
+      </div>
+      <div class="desc blue" data-i18n="t4desc">Show or hide the floating status panel on chatbot pages.</div>
+    </div>
+
+    <!-- TOGGLE 5 : LIVE VIEWPORT -->
+    <div class="card">
+      <div class="row-flex">
+        <div>
+          <div class="toggle-label" data-i18n="t5name">👁️ Live Rhino Viewport</div>
+        </div>
+        <div class="toggle on" id="tView"></div>
+      </div>
+      <div class="desc blue" data-i18n="t5desc">Stream the active Rhino viewport into the floating panel, in sync with the running script.</div>
+    </div>
+
+    <!-- STATUS CARD -->
+    <div class="card">
+      <div class="card-title"><span data-i18n="statusTitle">📡 Connection Status</span></div>
+
+      <div class="status-row">
+        <span class="status-label" data-i18n="lblServer">Server:</span>
+        <span class="dot bad" id="dotServer"></span>
+        <span class="status-text" id="txtServer">Disconnected ❌</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label" data-i18n="lblRhino">Rhino:</span>
+        <span class="dot bad" id="dotRhino"></span>
+        <span class="status-text" id="txtRhino">Disconnected ❌</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label" data-i18n="lblChatbot">Chatbot:</span>
+        <span class="badge" id="txtChatbot">—</span>
+      </div>
+    </div>
+
+    <!-- LOG CARD -->
+    <div class="card">
+      <div class="card-title">
+        <span data-i18n="logTitle">📋 Live Log</span>
+        <button class="btn btn-gray btn-xs" id="btnClearLog" data-i18n="btnClear">Clear</button>
+      </div>
+      <div class="logbox" id="logBox"></div>
+    </div>
+  </div>
+
+  <!-- ========================= TAB 2 : CODE ========================= -->
+  <div class="tab-panel" id="tab-code">
+
+    <div class="card">
+      <h3 class="section-title green" data-i18n="testTitle">⚡ Quick Test</h3>
+      <button class="btn btn-green" id="btnTest" data-i18n="btnTest">🧪 Draw Test Sphere in Rhino</button>
+      <div class="desc blue" data-i18n="testDesc">Sends a small test script to Rhino: a sphere of radius 8 at the world origin. Nothing is saved to your model until Rhino runs it.</div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title cyan" data-i18n="pageTitle">🌐 Code on this page</h3>
+      <div class="desc green" data-i18n="pageDesc">Runs the newest Rhino Python block found in the chatbot page — perfect when Live Sync is paused or the code was generated before the extension was loaded.</div>
+      <div class="btn-row">
+        <button class="btn btn-cyan btn-sm" id="btnPageRun" data-i18n="btnPageRun">▶ Run newest code block on the page</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title cyan" data-i18n="manualTitle">Manual Python Execution</h3>
+      <textarea id="manualCode" rows="6" spellcheck="false" data-i18n-ph="manualPh" placeholder="import rhinoscriptsyntax as rs&#10;rs.AddSphere((0,0,0), 5)"></textarea>
+      <div class="manual-meta" id="manualMeta">0 lines</div>
+      <div class="btn-row">
+        <button class="btn btn-cyan" id="btnRun" data-i18n="btnRun">🚀 Run in Rhino</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gray btn-sm" id="btnClean" data-i18n="btnClean">🧹 Clean</button>
+        <button class="btn btn-gray btn-sm" id="btnCopyCode" data-i18n="btnCopyCode">📋 Copy</button>
+      </div>
+      <div class="hint" id="cleanHint" data-i18n="cleanHint">Clean removes toolbar words that some chat pages glue onto the code (Download, Copy code, a language label) - those words are not Python and break the run.</div>
+      <div class="hint" data-i18n="manualHint">Long scripts are executed step by step, so Rhino stays responsive and never freezes.</div>
+      <div class="hint" data-i18n="manualAutoHint">The same box lives on the floating panel: detected code is placed there automatically and sent exactly as you see it.</div>
+    </div>
+  </div>
+
+  <!-- ======================= TAB 3 : SETTINGS ======================= -->
+  <div class="tab-panel" id="tab-settings">
+
+    <div class="card">
+      <h3 class="section-title cyan" data-i18n="themeTitle">🎨 Theme</h3>
+      <div class="desc blue" data-i18n="themeDesc">Pick the look of both the popup and the floating panel on the page. Dark and Light are included; the other skins are for fun.</div>
+      <div class="theme-grid" id="themeGrid">
+        <div class="theme-chip" data-theme="dark">
+          <div class="theme-swatches"><span style="background:#0d1117"></span><span style="background:#1c2333"></span><span style="background:#00d4ff"></span></div>
+          <span data-i18n="themeDark">Dark</span>
+        </div>
+        <div class="theme-chip" data-theme="light">
+          <div class="theme-swatches"><span style="background:#ffffff"></span><span style="background:#eef2f7"></span><span style="background:#0a7ea4"></span></div>
+          <span data-i18n="themeLight">Light</span>
+        </div>
+        <div class="theme-chip" data-theme="midnight">
+          <div class="theme-swatches"><span style="background:#0b1020"></span><span style="background:#141c33"></span><span style="background:#4da3ff"></span></div>
+          <span data-i18n="themeMidnight">Midnight</span>
+        </div>
+        <div class="theme-chip" data-theme="nord">
+          <div class="theme-swatches"><span style="background:#2e3440"></span><span style="background:#3b4252"></span><span style="background:#88c0d0"></span></div>
+          <span data-i18n="themeNord">Nord</span>
+        </div>
+        <div class="theme-chip" data-theme="dracula">
+          <div class="theme-swatches"><span style="background:#282a36"></span><span style="background:#343746"></span><span style="background:#8be9fd"></span></div>
+          <span data-i18n="themeDracula">Dracula</span>
+        </div>
+        <div class="theme-chip" data-theme="solarized">
+          <div class="theme-swatches"><span style="background:#fdf6e3"></span><span style="background:#eee8d5"></span><span style="background:#268bd2"></span></div>
+          <span data-i18n="themeSolarized">Solarized</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="field-label" for="langSel" data-i18n="langLabel">Language</label>
+      <select id="langSel">
+        <option value="en">English</option>
+        <option value="fa">فارسی</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <label class="field-label" for="srvUrlInput" data-i18n="srvLabel">Server URL</label>
+      <input type="text" id="srvUrlInput" value="http://127.0.0.1:8765" spellcheck="false">
+      <div class="btn-row">
+        <button class="btn btn-cyan btn-sm" id="btnSaveUrl" data-i18n="btnSave">Save</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="section-title purple" data-i18n="promptTitle">🧠 Smart Prompt Template</h3>
+      <textarea id="promptArea" rows="10" spellcheck="false"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-purple btn-sm" id="btnSavePrompt" data-i18n="btnSave2">Save</button>
+        <button class="btn btn-gray btn-sm"   id="btnResetPrompt" data-i18n="btnReset">Reset to Default</button>
+      </div>
+      <div class="hint" data-i18n="promptHint">The template also tells the AI to keep the code modular, so step-by-step execution stays smooth.</div>
+    </div>
+  </div>
+
+  <!-- ======================== TAB 4 : ABOUT ======================== -->
+  <div class="tab-panel" id="tab-about">
+    <div class="card about-box">
+      <div class="about-emoji">🦏</div>
+      <div class="about-name">Rhino Live Bridge</div>
+      <div class="about-ver">Version 2.6.4</div>
+      <div class="about-by">Designed by Reza Khoshnood</div>
+      <div class="about-mail">Email: <a href="mailto:reza.khoshnoood@gmail.com">reza.khoshnoood@gmail.com</a></div>
+      <div class="about-desc" data-i18n="aboutDesc">A live bridge between AI chatbots and McNeel Rhino 3D. It watches the chatbot page for Rhino Python code, sends it to a local bridge server, and Rhino executes it instantly — no copy-paste needed.</div>
+      <div class="about-foot" data-i18n="aboutFoot">Built with a FastAPI bridge server + Rhino polling worker.</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

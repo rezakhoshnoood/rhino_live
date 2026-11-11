@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Rhino Live Bridge",
+  "version": "2.6.4",
+  "description": "Real-time bridge between AI chatbots (ChatGPT, Claude, Gemini, DeepSeek...) and McNeel Rhino 3D: live Rhino viewport inside the page, step by step execution and an automatic verification loop.",
+  "author": "Reza Khoshnood",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:8765/*",
+    "http://127.0.0.1:8765/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Rhino Live Bridge"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

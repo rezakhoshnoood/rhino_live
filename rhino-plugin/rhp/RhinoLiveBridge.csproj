@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Rhino Live Bridge .rhp
+
+       Target: .NET Framework 4.8  =>  loads in Rhino 7 AND Rhino 8
+       (Rhino 8 runs .NET Framework plugins alongside .NET 7 ones.)
+
+       The Python bridge is embedded as a resource, so the built
+       RhinoLiveBridge.rhp is completely self contained. -->
+
+  <PropertyGroup>
+    <!-- RhinoTarget lets the build scripts switch target without editing files:
+         dotnet build -c Release -p:RhinoTarget=net48   (Windows, Rhino 7 + 8)   <== default
+         dotnet build -c Release -p:RhinoTarget=net7.0  (macOS,   Rhino 8) -->
+    <TargetFramework Condition="'$(RhinoTarget)' == ''">net48</TargetFramework>
+    <TargetFramework Condition="'$(RhinoTarget)' != ''">$(RhinoTarget)</TargetFramework>
+    <AssemblyName>RhinoLiveBridge</AssemblyName>
+    <RootNamespace>RhinoLiveBridge</RootNamespace>
+    <LangVersion>7.3</LangVersion>
+    <Version>2.6.4</Version>
+    <AssemblyVersion>2.6.4.0</AssemblyVersion>
+    <FileVersion>2.6.4.0</FileVersion>
+    <Product>Rhino Live Bridge</Product>
+    <Company>Reza Khoshnood</Company>
+    <Description>Real time bridge between AI chatbots in Chrome and Rhino 3D.</Description>
+    <Copyright>Reza Khoshnood</Copyright>
+
+    <!-- keep the output flat: the .rhp must sit next to the build output -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- RhinoCommon: the official plugin SDK from NuGet (no Rhino install needed) -->
+    <PackageReference Include="RhinoCommon" Version="8.35.26251.13001" />
+    <!-- lets a Linux/macOS machine build a net48 assembly as well -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tools/ holds the optional .rhp verifier - never compile it into the plugin -->
+    <Compile Remove="tools/**" />
+    <Compile Remove="built/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the bridge itself travels inside the .rhp -->
+    <EmbeddedResource Include="../RhinoLiveBridge.py">
+      <LogicalName>RhinoLiveBridge.RhinoLiveBridge.py</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- produce RhinoLiveBridge.rhp next to the dll and collect it in built\ -->
+  <Target Name="MakeRhp" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(TargetDir)RhinoLiveBridge.rhp" />
+    <MakeDir Directories="$(MSBuildProjectDirectory)/built" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(MSBuildProjectDirectory)/built/RhinoLiveBridge.rhp" />
+    <Message Importance="high" Text="Rhino plugin ready: $(MSBuildProjectDirectory)/built/RhinoLiveBridge.rhp" />
+  </Target>
+
+</Project>

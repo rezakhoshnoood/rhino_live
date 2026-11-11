@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Checks a built .rhp the same way Rhino loads it: PE + CLR metadata only.
+       Run it with:  dotnet run -c Release  (from the rhp folder, or use
+       the project path tools/RhpVerifier.csproj)
+       It reads built/RhinoLiveBridge.rhp and ../RhinoLiveBridge.py by default. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>RhpVerifier</AssemblyName>
+    <RootNamespace>RhpVerifier</RootNamespace>
+  </PropertyGroup>
+</Project>
